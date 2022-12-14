@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Opal Overlay</title>
+        <link rel="stylesheet" href="style.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inconsolata&display=swap" rel="stylesheet">
+        <script src="renderer.js"></script>
+        <meta charset="utf-8">
+    </head>
+    <body style="background-color: rgba(73, 73, 73, 0.2)" onload="checkForConfig()">
+        <div class="wr">
+            <div class="bl r">
+                <button id="exit" onclick="api.send('exit')">X</button>
+            </div> 
+            <h1 class="blue_white_gradient r bl" id="opal">Opal</h1>
+            
+            <select id="client" onchange="handleClient(0, 1)" class="bl">
+                <option value="vanilla">Vanilla</option>
+                <option value="forge">Forge</option>
+                <option value="lunar">Lunar</option>
+                <option value="badlion">Badlion</option>
+                <option value="feather">Feather Mod</option>
+                <option value="laby">LabyMod</option>
+                <!--<option value="other">Other/Alternate game directory</option>!-->
+            </select>
+            <table id="user-table"></table>
+            <!--add a slider that will change the opacity of the bg-->
+            <div class="bl">
+                <label for="opacity">Opacity</label>
+                <input type="range" id="opacity" name="opacity" min="0" max="100" value="20" onload="getNameColour(this.value)" oninput="handleOpacity(this.value)">
+            </div>
+            <div class="bl">
+                <label for="reset">Reset Table</label>
+                <button id="reset" onclick="document.getElementById('user-table').innerHTML=''; api.send('resize', {height : 125})">Reset</button>
+            </div>
+            <div class="bl" id="apikey" style="display:none;">
+                <label for="apikey">Enter API Key</label>
+                <input type="text"name="apikey" placeholder="Enter API Key (paste it in, this will disappear))" oninput="handleAPIKey(this.value)">
+            </div>
+            <!--add an exit button-->
+             
+        </div>
+
+    </body>
+</html>
