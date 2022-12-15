@@ -6,7 +6,6 @@ A Hypixel Bedwars overlay.
 
 1. Download latest release from [here](https://github.com/AnotherPillow/opal-overlay/releases).
 2. Unzip the file.
-3. Run `Opal Overlay.exe`.
 
 ## Usage
 
