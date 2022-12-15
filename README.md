@@ -30,3 +30,13 @@ A Hypixel Bedwars overlay.
 5. To test your changes, run `npm run dev` and the overlay will open in a window.
 6. To test if your changes work when built, run `npm run build` and run the `Opal Overlay.exe` in the `dist` folder.
 7. Create a pull request.
+
+## Images
+
+### Overlay
+
+![Image of overlay](https://i.imgur.com/tx2qMNv.png)
+
+### Opacity Slider
+
+![GIF of opacity slider](https://i.imgur.com/XWMCTc6.gif)
