@@ -39,7 +39,7 @@ let win;
 
 function createWindow () {;
     win = new BrowserWindow({
-        width: 475,
+        width: 500,
         height: 125,
         transparent: true,
         frame: false,
@@ -91,7 +91,7 @@ app.on('activate', () => {
 
 ipcMain.on('resize', (event,data) => {
     //change the window's height
-    win.setSize(475, data.height)
+    win.setSize(500, data.height)
 })
 
 ipcMain.on('client', (event,data) => {
@@ -135,8 +135,24 @@ function runTail(path) {
         var players = []
         if (/^\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[CHAT\] ONLINE: (.+)$/.test(data)) {
             players = data.match(/^\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[CHAT\] ONLINE: (.+)$/)[1].split(", ");
+        } else if (/^\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[OptiFine\] Resource packs: (.+)$/.test(data)) {
+            let packName = data.match(/^\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[OptiFine\] Resource packs: (.+)$/)[1];
+
+            packName = packName.replace(/§[0-9a-z]/g, '');
+            packName = packName.replace(/┐¢[0-9a-z]/g, '');
+            packName = packName.replace(/�[0-9a-z]/g, '');
+            packName = packName.replace('.zip', '');
+            //remove a starting ! if it exists
+            if (packName.startsWith("! ")) {
+                packName = packName.substring(2);
+            }
+
+            return toRenderer({
+                type: "resourcepack",
+                data: packName
+            })
+
         }
-        //if (players) console.log(players,players.length)
         if (players.length >= 1) {
             let bwPlayers = []
             let forLoopRuns = players.length;
@@ -159,6 +175,7 @@ function runTail(path) {
                             bwStats: {}
                         }
                         data.nick = nick;
+                        if (hyp.player === null) nick = true;
                         if (!nick) {
                             data.uuid = uuid;
                             data.name = player;
@@ -205,7 +222,10 @@ function runTail(path) {
                                 `bwPlayers (len=${bwPlayers.length}):`,
                                 bwPlayers
                             )
-                            toRenderer(bwPlayers)
+                            toRenderer({
+                                type: 'bwPlayers',
+                                data: bwPlayers
+                            })
                         }
                     })
                 })

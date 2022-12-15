@@ -12,8 +12,16 @@ function handleClient(path=false, gen) {
 
 setInterval(() => {
     api.toRenderer().then((data) => {
-        console.log(data)
-        generateUserTable(data);
+        switch (data.type) {
+            case 'bwPlayers':
+                generateUserTable(data.data);
+                break;
+            case 'resourcepack':
+                handleResourcePack(data.data);
+                break;
+            default:
+                break;
+        }
     })
 }, 1000)
 
@@ -41,7 +49,7 @@ const generateUserTable = (users) => {
     table.innerHTML = '';
 
     const header = document.createElement('tr');
-    header.innerHTML = '<th>Icon</th><th>Name</th><th>FKDR</th><th>BBLR</th><th>WLR</th>';
+    header.innerHTML = '<th>Icon</th><th>Name</th><th>FKDR</th><th>BBLR</th><th>WLR</th><th>TAG</th>';
     
     table.appendChild(header);
 
@@ -62,22 +70,24 @@ const generateUserTable = (users) => {
         if (user.nick === false) row.innerHTML = 
             (   
                 `<td><img src="https://crafatar.com/avatars/${user.uuid}?size=16&overlay"/></td>`+
-                `<td>${getBedwarsStarColour(user.bwStats.star) || 0} <span style="color: ${getNameColour(user)}">${user.name}</span>&nbsp</td>`+
+                `<td>${getBedwarsStarColour(user.bwStats.star || 0)} <span style="color: ${getNameColour(user)}">${user.name}</span>&nbsp</td>`+
                 //set class based on if the ratio is less than or greather than 1
 
                 `<td class="${FKDR >= 2 ? 'red' : ''}">${FKDR === 'NaN' ? '?' : FKDR}&nbsp</td>`+
 
                 //`<td>${user.bwStats.bedsBroken}</td>`+
                 `<td>${BBLR === 'NaN' ? '?' : BBLR}&nbsp</td>`+
-                `<td>${WLR === 'NaN' ? '?' : WLR}&nbsp</td>`
+                `<td>${WLR === 'NaN' ? '?' : WLR}&nbsp</td>`+
+                `<td> - </td>`
             )
         else if (user.nick === true) row.innerHTML =
             (
                 `<td><img src="https://crafatar.com/avatars/d3c47f6fae3a45c1ad7ce2c762b03ae6?size=16&overlay"/></td>`+
-                `<td>[NICK] <span style="color: ${getNameColour(user)}">${user.name}</span>&nbsp</td>`+
+                `<td><span style="color: #AAAAAA">[NICK]</span> <span style="color: ${getNameColour(user)}">${user.name}</span>&nbsp</td>`+
                 `<td> - &nbsp</td>`+
                 `<td> - &nbsp</td>`+
-                `<td> - &nbsp</td>`
+                `<td> - &nbsp</td>`+
+                `<td>NICK</td>`
             )
                 
         table.appendChild(row);
@@ -145,6 +155,12 @@ const getNameColour = (user) => {
             return '#AAAAAA';
     }
 }
+
+const handleResourcePack = (name) => {
+    document.getElementById('packDiv').style.display = 'block';
+    document.getElementById('packName').innerHTML = name
+}
+
 const handleOpacity = (opacity) => {
     const body = document.querySelector('body');
     body.style.backgroundColor = `rgba(73, 73, 73, ${opacity/100})`;
