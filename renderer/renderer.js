@@ -14,7 +14,7 @@ setInterval(() => {
     api.toRenderer().then((data) => {
         switch (data.type) {
             case 'bwPlayers':
-                generateUserTable(data.data);
+                generateBedwarsUserTable(data.data);
                 break;
             case 'resourcepack':
                 handleResourcePack(data.data);
@@ -25,7 +25,7 @@ setInterval(() => {
     })
 }, 1000)
 
-const generateUserTable = (users) => {
+const generateBedwarsUserTable = (users) => {
     /*
         users = [
             {

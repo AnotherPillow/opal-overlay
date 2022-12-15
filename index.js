@@ -152,6 +152,8 @@ function runTail(path) {
                 data: packName
             })
 
+        } else if (/^\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[CHAT\] Team #([0-9]+): ([a-zA-z0-9_]+)$/.test(data)) {
+
         }
         if (players.length >= 1) {
             let bwPlayers = []
@@ -175,7 +177,7 @@ function runTail(path) {
                             bwStats: {}
                         }
                         data.nick = nick;
-                        if (hyp.player === null) nick = true;
+                        if (hyp.player === null) data.nick = true;
                         if (!nick) {
                             data.uuid = uuid;
                             data.name = player;
