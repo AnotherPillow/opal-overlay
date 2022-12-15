@@ -166,9 +166,15 @@ const handleOpacity = (opacity) => {
     body.style.backgroundColor = `rgba(73, 73, 73, ${opacity/100})`;
 }
 const checkForConfig = () => {
-    api.getConfig().then((config) => {
+    api.getConfig().then((data) => {
+        const config = data.config;
+        console.log(data)
         if (config.api_key === "" || config.api_key === undefined || config.api_key === null) {
             document.querySelector('#apikey').style.display = 'block';  
+        }
+        if (data.version !== undefined) {
+            console.log("asdf")
+            handleVersion(data.version)
         }
     })
 }
@@ -176,4 +182,40 @@ const checkForConfig = () => {
 const handleAPIKey = (key) => {
     api.send('config', {api_key: key})
     document.querySelector('#apikey').style.display = 'none';
+}
+const handleVersion = (version) => {
+    const fetchURL = 'https://api.github.com/repos/anotherpillow/opal-overlay/releases/latest';
+
+    // fetch the latest release with the application/json content type
+    fetch(fetchURL, {
+        headers: {
+            'Accept': 'application/json'
+        }
+    }).then(res=>res.json()).then(json => {
+        const releaseVersion = json.tag_name.replace("v","");
+        const releaseParts = releaseVersion.split('.');
+        const versionParts = version.split('.');
+
+        console.log(
+            releaseVersion,
+            version,
+        )
+
+        if (releaseVersion !== version) {
+            for (let i = 0; i < releaseParts.length; i++) {
+                if (parseInt(releaseParts[i]) > parseInt(versionParts[i])) {
+                    document.querySelector('#updateDiv').style.display = 'block';
+                    document.querySelector('#updateText').innerHTML = `<span>New version available! <a id="downloadNewVersion" href="https://github.com/AnotherPillow/opal-overlay/releases/download/v${releaseVersion}/Opal.Overlay-win32-x64.zip">Download v${releaseVersion}</a></span>`
+                    break;
+                } else if (parseInt(releaseParts[i]) < parseInt(versionParts[i])) {
+                    document.querySelector('#updateDiv').style.display = 'block';
+                    document.querySelector('#updateText').innerHTML = `<span>You are running a development version!</span><span class="orange"> v${version}</span>`
+                    break;
+                }
+            }
+        } else {
+            document.querySelector('#updateDiv').style.display = 'block';
+            document.querySelector('#updateText').innerHTML = `<span>You are running the latest version!</span><span> v${version}</span>`
+        }
+    })
 }

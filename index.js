@@ -14,25 +14,25 @@ let config = require(configPath);
 const appdata = process.env.appdata
 const homedir = app.getPath('home');
 
-//Discord RPC was down, so I commented it out. I'll uncomment it when it's back up.
-/*const RPC = require('discord-rpc');
+const version = app.getVersion();
+
+const startDate = new Date();
+const RPC = require('discord-rpc');
 const rpc = new RPC.Client({transport: 'ipc'})
 
 rpc.on('ready', () => {
     console.log('Discord RPC Connected')
     rpc.setActivity({
-        state: 'Opal Overlay',
+        state: 'Playing Minecraft',
         details: 'Using Opal Overlay',
         largeImageKey: 'opal_overlay512x512',
         largeImageText: 'Opal Overlay',
-        startTimestamp: new Date(),
+        startTimestamp: startDate,
+        smallImageKey: 'bed',
         instance: false,
-        smallImageKey: 'opal_overlay512x512',
-        smallImageText: 'Opal Overlay'
-    }
-    )
+    })
 })
-rpc.login({clientId: "1052622317290795079"})*/
+rpc.login({clientId: "1052622317290795079"})
         
 
 let win;
@@ -64,8 +64,11 @@ function createWindow () {;
     win.setPosition(screen.getPrimaryDisplay().workAreaSize.width - 700, 0)
 
     setTimeout(() => {
-        win.webContents.send("conf",config);
-    }, 500);
+        win.webContents.send("conf",{
+            config: config,
+            version: version
+        });
+    }, 600);
 }
 
 
@@ -74,7 +77,10 @@ app.on('ready', () => {
     createWindow();
 });
 setTimeout(() => {
-    win.webContents.send("conf",config);
+    win.webContents.send("conf",{
+        config: config,
+        version: version
+    });
 }, 1500);
 
 app.on('window-all-closed', () => {
@@ -147,6 +153,8 @@ function runTail(path) {
                 packName = packName.substring(2);
             }
 
+            updateRPCDescription('Playing Bedwars', `Using ${packName}`);
+
             return toRenderer({
                 type: "resourcepack",
                 data: packName
@@ -156,6 +164,7 @@ function runTail(path) {
 
         }
         if (players.length >= 1) {
+            updateRPCDescription('Playing Bedwars', 'Using Opal Overlay');
             let bwPlayers = []
             let forLoopRuns = players.length;
             
@@ -251,3 +260,15 @@ ipcMain.on('config', (event,data) => {
 ipcMain.on('exit', (event,data) => {
     app.quit();
 })
+
+const updateRPCDescription = (state,desc) => {
+    rpc.setActivity({
+        state: state,
+        details: desc,
+        largeImageKey: 'opal_overlay512x512',
+        largeImageText: 'Opal Overlay',
+        startTimestamp: startDate,
+        instance: false,
+        smallImageKey: 'bed',
+    })
+}

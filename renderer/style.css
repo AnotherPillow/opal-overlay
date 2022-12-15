@@ -31,3 +31,10 @@ body {
     height:25px;
     position: relative;
 }
+a {
+    text-decoration: none;
+    color: orange;
+}
+.orange {
+    color: orange;
+}

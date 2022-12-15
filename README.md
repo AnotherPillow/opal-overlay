@@ -20,6 +20,8 @@ A Hypixel Bedwars overlay.
 - Adjusts for prestige colour, username colour (Paid ranks, youtube and admin) and if their FKDR is above 2 (stat turns red).
 - Automatically populates when you run `/who` in chat.
 - Displays the currently in use resource pack (only works if you change it while overlay is open).
+- Automatically checks for updates and notifies you if there is one.
+- Discord RPC support.
 
 ## Development/Contributing
 
