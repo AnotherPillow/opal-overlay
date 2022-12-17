@@ -22,6 +22,7 @@ A Hypixel Bedwars overlay.
 - Displays the currently in use resource pack (only works if you change it while overlay is open).
 - Automatically checks for updates and notifies you if there is one.
 - Discord RPC support.
+- Choose between Minecraft font and Inconsolata font for the table.
 
 ## Development/Contributing
 
