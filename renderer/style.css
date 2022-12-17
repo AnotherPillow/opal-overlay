@@ -1,6 +1,12 @@
 body {
-    font-family: 'Inconsolata', monospace;
     color:white;
+}
+body, .inconsolata {
+    font-family: 'Inconsolata', monospace;
+}
+
+#user-table.inconsolata #settings>tr>td {
+    font-size: 14px;
 }
 .other_input {
     background-color: cornflowerblue;
@@ -37,4 +43,13 @@ a {
 }
 .orange {
     color: orange;
+}
+.minecraft {
+    font-family: 'Minecraft', 'Inconsolata', monospace;
+    font-size: 0.7em;
+}
+
+@font-face {
+    font-family: 'Minecraft';
+    src: url(Minecraft.ttf);
 }

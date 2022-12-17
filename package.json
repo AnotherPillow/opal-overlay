@@ -14,6 +14,10 @@
   },
   "productName": "Opal Overlay",
   "name": "opal-overlay",
-  "version": "0.1.2",
-  "author":"AnotherPillow"
+  "version": "0.1.3",
+  "author":"AnotherPillow",
+  "repository": {
+    "type": "git",
+    "url": "github.com/AnotherPillow/opal-overlay"
+  }
 }

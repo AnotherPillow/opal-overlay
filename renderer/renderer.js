@@ -1,3 +1,5 @@
+var currentFont = 'inconsolata'
+
 function handleClient(path=false, gen) {
     const client = document.getElementById('client').value;
     
@@ -58,7 +60,7 @@ const generateBedwarsUserTable = (users) => {
         return b.bwStats.star - a.bwStats.star;
     })
     if (users.length > 1) {
-        api.send("resize", {height : 100 + (users.length * 35)})
+        api.send("resize", {height : 130 + (users.length * 25)})
     }
     
     console.log(users)
@@ -218,4 +220,11 @@ const handleVersion = (version) => {
             document.querySelector('#updateText').innerHTML = `<span>You are running the latest version!</span><span> v${version}</span>`
         }
     })
+}
+const handleFont = (font) => {
+    if (font === currentFont) return;
+    var oldFont = currentFont;
+    currentFont = font;
+    document.getElementById("user-table").classList.remove(oldFont);
+    document.getElementById("user-table").classList.add(font);
 }

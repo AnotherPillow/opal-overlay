@@ -30,6 +30,12 @@ rpc.on('ready', () => {
         startTimestamp: startDate,
         smallImageKey: 'bed',
         instance: false,
+        buttons: [
+            {
+                label: "Download Opal Overlay",
+                url: "https://github.com/AnotherPillow/opal-overlay/releases/latest",
+            }
+        ]
     })
 })
 rpc.login({clientId: "1052622317290795079"})
@@ -229,10 +235,10 @@ function runTail(path) {
                         bwPlayers.push(data)
                         forLoopRuns--
                         if (forLoopRuns == 0) {
-                            console.log(
+                            /*console.log(
                                 `bwPlayers (len=${bwPlayers.length}):`,
                                 bwPlayers
-                            )
+                            )*/
                             toRenderer({
                                 type: 'bwPlayers',
                                 data: bwPlayers
