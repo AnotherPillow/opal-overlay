@@ -1,4 +1,5 @@
 var currentFont = 'inconsolata'
+let sessionShown = false;
 
 function handleClient(path=false, gen) {
     const client = document.getElementById('client').value;
@@ -20,6 +21,9 @@ setInterval(() => {
                 break;
             case 'resourcepack':
                 handleResourcePack(data.data);
+                break;
+            case 'stats':
+                handleStats(data.data);
                 break;
             default:
                 break;
@@ -60,7 +64,12 @@ const generateBedwarsUserTable = (users) => {
         return b.bwStats.star - a.bwStats.star;
     })
     if (users.length > 1) {
-        api.send("resize", {height : 130 + (users.length * 25)})
+        let newHeight = 140 + (users.length * 20);
+        for (const user of users) {
+            if (user.length > 13) newHeight += 20;
+        }
+        if (sessionShown) newHeight += 50;
+        api.send("resize", {height : 140 + (users.length * 29)})
     }
     
     console.log(users)
@@ -228,3 +237,64 @@ const handleFont = (font) => {
     document.getElementById("user-table").classList.remove(oldFont);
     document.getElementById("user-table").classList.add(font);
 }
+
+const sessionStats = {
+    kills: 0,
+    deaths: 0,
+    fkdr: 0,
+    bblr: 0,
+    kdr: 0,
+    final_kills: 0,
+    final_deaths: 0,
+    bed_breaks: 0,
+    bed_losses: 0,
+};
+
+const handleStats = (stats) => {
+    let table = document.getElementById('session_stats');
+    console.dir(sessionStats)
+    
+    if (stats.self_type === undefined) {
+        return;
+    }
+    else if (stats.self_type === 'kill') {
+        sessionStats['kills']+=1;
+        console.log('kill')
+    } else if (stats.self_type === 'death') {
+        sessionStats['deaths']+=1;
+        console.log('death')
+    } else if (stats.self_type === 'final_kill') {
+        sessionStats['final_kills']+=1;
+        console.log('final_kill')
+    } else if (stats.self_type === 'final_death') {
+        sessionStats['final_deaths']+=1;
+        console.log('final_death')
+    } else if (stats.self_type === 'bed_break') {
+        sessionStats['bed_breaks']+=1;
+        console.log('bed_break')
+    } else if (stats.self_type === 'bed_loss') {
+        sessionStats['bed_losses']+=1;
+        console.log('bed_loss')
+    }
+    table.innerHTML = '';
+    sessionStats['fkdr'] = (sessionStats['final_kills'] / sessionStats['final_deaths']).toFixed(2) || 0;
+    sessionStats['bblr'] = (sessionStats['bed_breaks'] / sessionStats['bed_losses']).toFixed(2) || 0;
+    sessionStats['kdr'] = (sessionStats['kills'] / sessionStats['deaths']).toFixed(2) || 0;
+
+    sessionStats['fkdr'] = sessionStats['fkdr'] === 'NaN' || checkInf(sessionStats['fkdr'])? 0 : sessionStats['fkdr'];
+    sessionStats['bblr'] = sessionStats['bblr'] === 'NaN' || checkInf(sessionStats['bblr']) ? 0 : sessionStats['bblr'];
+    sessionStats['kdr'] = sessionStats['kdr'] === 'NaN' || checkInf(sessionStats['kdr']) ? 0 : sessionStats['kdr'];
+
+    let trElement = document.createElement('tr');
+    let trElement2 = document.createElement('tr');
+    trElement.innerHTML = `<td>${sessionStats['fkdr']} - ${sessionStats['bblr']} - ${sessionStats['kdr']} - ${sessionStats['final_kills']}</td>`;
+    trElement2.innerHTML = `<th>FKDR - BBLR - KDR - FINALS</th>`
+    table.appendChild(trElement2);
+    table.appendChild(trElement);
+    
+    document.getElementById("session").style.display = "block";
+    sessionShown = true;
+
+}
+
+const checkInf = (n) => {return n === 'Infinity'};

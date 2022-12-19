@@ -2,3 +2,4 @@ dist/
 renderer/*.png
 node_modules/
 config.json
+.parsing/

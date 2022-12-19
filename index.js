@@ -140,9 +140,28 @@ const toRenderer = (data) => {
 
 
 function runTail(path) {
+    var logContents = fs.readFileSync(path, 'utf8');
+    var IGN;
+    if (path.includes('lunarclient')) {
+        for (line of logContents.split('\n')) {
+            const x= line.match(/(?<=\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[LC\] Setting user: ).+/g);
+            if (x) {
+                IGN = x[0];
+                break;
+            }
+        }
+    } else {
+        for (line of logContents.split('\n')) {
+            const x = logContents.match(/(?<=\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: Setting user: ).+/g);
+            if (x) {
+                IGN = x[0];
+                break;
+            }
+        }
+    }
+
     var tail = new Tail(path, {logger: console, useWatchFile: true, nLines: 1, fsWatchOptions: {interval: 100}});
     tail.on("line", function(data) {
-
         
         var players = []
         if (/^\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[CHAT\] ONLINE: (.+)$/.test(data)) {
@@ -167,6 +186,92 @@ function runTail(path) {
             })
 
         } else if (/^\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[CHAT\] Team #([0-9]+): ([a-zA-z0-9_]+)$/.test(data)) {
+            
+        } else if (/^\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[CHAT\] .+ (was .+ by|by|with) .+$/.test(data)) {
+            var action = ''
+            var message = data.match(/^\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[CHAT\] (.+)$/)[1];
+
+            if (!message) return;
+
+            if (message.toUpperCase().startsWith('BED DESTRUCTION') || /[A-Z]+ BED/.test(message.toUpperCase())) {
+                action = 'bed_break'
+            } else if (message.toUpperCase().includes('FINAL KILL')) {
+                action = 'final_kill'
+            } else if (message.toUpperCase().includes("'S GOLEM") || message.toUpperCase().includes("DREAM DEFENDER")) {
+                action = 'golem_kill'
+            } else {
+                action = 'kill'
+            }
+
+            
+            if (message.includes(".") || message.includes("!")) {
+                message = message.replace(".", "");
+                message = message.replace("!", "");
+            }
+            
+            const components = message.split(' ');
+            
+            let victim;
+            if (action === 'bed_break') victim = components[3] + " " + components[4];
+            else victim = components[0];
+
+            let killer;
+            if ((action === 'kill' && !message.includes("#")) || action === 'bed_break')
+                killer = components[components.length - 1];
+            else if ((action === 'final_kill' && message.includes("#")))
+                killer = components[components.length - 5].replace("'s", "");
+            else if (action === 'golem_kill')
+                killer = components[components.length - 2].replace("'s", "");
+            else if (action === 'final_kill')
+                killer = components[components.length - 3]; 
+            else
+                killer = components[components.length - 1];
+
+            
+
+            /*console.log(
+                `Killer: ${killer} - ${action}\n`,
+                `Victim: ${victim} - ${action}`
+            )*/
+            let content = {
+                killer: killer,
+                victim: victim,
+                type: action
+            }
+            if (action === 'final_kill' && victim === IGN) {
+                content['self_type'] = 'final_death'
+            } else if (action === 'final_kill' && killer === IGN) {
+                content['self_type'] = 'final_kill'
+            } else if (action === 'kill' && killer === IGN) {
+                content['self_type'] = 'kill'
+            } else if (action === 'kill' && victim === IGN) {
+                content['self_type'] = 'death'
+            } else if (action === 'bed_break' && killer === IGN) {
+                content['self_type'] = 'bed_break'
+            } else if (action === 'bed_break' && victim === "Your Bed") {
+                content['self_type'] = 'bed_lose'
+            } else {
+                content['self_type'] = undefined
+            }
+
+            /*
+            death
+            kill
+            final_death
+            final_kill
+            bed_break
+            bed_lose
+            undefined
+             */
+
+            console.log(content)
+
+            if (content.self_type === undefined) return;
+            console.log("hnnnngh")
+            toRenderer({
+                type: "stats",
+                data: content
+            });
 
         }
         if (players.length >= 1) {
@@ -179,12 +284,16 @@ function runTail(path) {
             const apiURL = 'https://api.hypixel.net/player?key=' + config.api_key + '&uuid=';
             
             for (const player of players) {
-                fetch("https://api.mojang.com/users/profiles/minecraft/" + player).then(res=>res.json()).then(json => {
+                let r;
+                fetch("https://api.mojang.com/users/profiles/minecraft/" + player).then(res=>r=res).then(res=>res.json()).then(json => {
                     let nick = false;
-                    if (json.errorMessage === "Couldn't find any profile with that name") nick = true;
+                    if (json.errorMessage === "Couldn't find any profile with that name"|| r.status === 204) nick = true;
 
                     let uuid;
-                    if (!nick) uuid = json.id.replace(/-/g, '') || "NULL";
+
+                    if (!json.id) json.id = undefined
+                    if (!nick && json.id !== undefined) uuid = json.id.replace(/-/g, '') || "NULL";
+                    else uuid = "NULL";
                     
                     fetch(apiURL + uuid).then(res => res.json()).then(hyp => {
                         console.log("recv hypixel data")
