@@ -5,17 +5,19 @@
   },
   "scripts": {
     "dev": "electron .",
-    "build": "electron-packager . --overwrite --asar --platform=win32 --arch=x64 --icon=assets/icon.ico --prune=true --out=dist/ --electron-version=22.0.0"
+    "build": "electron-packager . --overwrite --asar --platform=win32 --arch=x64 --icon=assets/icon.ico --prune=true --out=dist/ --electron-version=22.0.0 && npm run copy-vbs",
+    "copy-vbs": "py src_directory.py"
   },
   "dependencies": {
     "discord-rpc": "^4.0.1",
+    "electron-builder": "^18.2.0",
     "node-fetch": "2.6",
     "tail": "^2.2.4"
   },
   "productName": "Opal Overlay",
   "name": "opal-overlay",
-  "version": "0.1.3",
-  "author":"AnotherPillow",
+  "version": "0.1.4",
+  "author": "AnotherPillow",
   "repository": {
     "type": "git",
     "url": "github.com/AnotherPillow/opal-overlay"

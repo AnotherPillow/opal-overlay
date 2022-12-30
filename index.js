@@ -1,15 +1,20 @@
-const {app, BrowserWindow, screen, ipcMain} = require('electron');
+const {app, BrowserWindow, screen, ipcMain, dialog} = require('electron');
 const path = require('path');
 const url = require('url');
 const Tail = require('tail').Tail;
 const fetch = require('node-fetch');
+const exec = require('child_process').exec;
 const fs = require('fs');
 const configPath = path.join(app.getPath('userData'), 'config.json');
 
 if (!fs.existsSync(configPath)) 
     fs.writeFileSync(configPath, JSON.stringify({api_key:''}));
 
+const vbsCWD = app.isPackaged ? path.join(process.resourcesPath, 'app.asar.unpacked', 'src') : path.join(__dirname, 'SRC');
+
 let config = require(configPath);
+if (!config.autowho) config.autowho = true;
+var enableAutowho = config.autowho || true;
 
 const appdata = process.env.appdata
 const homedir = app.getPath('home');
@@ -51,7 +56,7 @@ function createWindow () {;
         frame: false,
         webPreferences: {
             nodeIntegration: true,
-            preload: path.join(__dirname, 'preload.js')
+            preload: path.join(__dirname, 'src', 'preload.js')
         }
     });
     
@@ -77,7 +82,6 @@ function createWindow () {;
     }, 600);
 }
 
-
 //app.on('ready', createWindow);
 app.on('ready', () => {
     createWindow();
@@ -87,7 +91,7 @@ setTimeout(() => {
         config: config,
         version: version
     });
-}, 1500);
+}, 1600);
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
@@ -102,7 +106,6 @@ app.on('activate', () => {
 })
 
 ipcMain.on('resize', (event,data) => {
-    //change the window's height
     win.setSize(500, data.height)
 })
 
@@ -140,10 +143,13 @@ const toRenderer = (data) => {
 
 
 function runTail(path) {
-    var tail = new Tail(path, {logger: console, useWatchFile: true, nLines: 1, fsWatchOptions: {interval: 100}});
+    var IGN = findIGN(path);
+    
+    var tail = new Tail(path, {logger: console, useWatchFile: true, nLines: 1, fsWatchOptions: {interval: 100, }, encoding: 'utf8'});
     tail.on("line", function(data) {
 
-        
+        //console.log(data)
+
         var players = []
         if (/^\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[CHAT\] ONLINE: (.+)$/.test(data)) {
             players = data.match(/^\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[CHAT\] ONLINE: (.+)$/)[1].split(", ");
@@ -167,7 +173,16 @@ function runTail(path) {
             })
 
         } else if (/^\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[CHAT\] Team #([0-9]+): ([a-zA-z0-9_]+)$/.test(data)) {
-
+            //Skywars /who (WIP)
+        } else if (/^\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[CHAT\] ([A-Za-z0-9_]+) has joined \(\d+\/\d+\)!$/.test(data)
+        && data.includes(IGN)) {
+            if (enableAutowho) {
+                console.log(BrowserWindow.getFocusedWindow())
+                exec('wscript who.vbs', {cwd: vbsCWD}, (err, stdout, stderr) => {
+                    if (err !== null) dialog.showErrorBox("Error",
+                        "An error occurred while trying to run autowho. Please run /who manually.");
+                });
+            }
         }
         if (players.length >= 1) {
             updateRPCDescription('Playing Bedwars', 'Using Opal Overlay');
@@ -179,73 +194,98 @@ function runTail(path) {
             const apiURL = 'https://api.hypixel.net/player?key=' + config.api_key + '&uuid=';
             
             for (const player of players) {
-                fetch("https://api.mojang.com/users/profiles/minecraft/" + player).then(res=>res.json()).then(json => {
-                    let nick = false;
-                    if (json.errorMessage === "Couldn't find any profile with that name") nick = true;
+                try {
+                    let r;
+                    fetch("https://api.mojang.com/users/profiles/minecraft/" + player).then(res=>r=res).then(res=>res.json()).then(json=>{
+                        let nick = false;
+                        
+                        if (json.errorMessage === "Couldn't find any profile with that name" || r.status === 204) nick = true;
 
-                    let uuid;
-                    if (!nick) uuid = json.id.replace(/-/g, '') || "NULL";
-                    
-                    fetch(apiURL + uuid).then(res => res.json()).then(hyp => {
-                        console.log("recv hypixel data")
-                        let data = {
-                            bwStats: {}
+                        let uuid;
+                        if (json.id && !nick) uuid = json.id;
+                        else {
+                            nick=true;
+                            uuid = "NULL";
                         }
-                        data.nick = nick;
-                        if (hyp.player === null) data.nick = true;
-                        if (!nick) {
-                            data.uuid = uuid;
-                            data.name = player;
-                            try {data.paidRank = hyp.player.newPackageRank || "NON";} catch (_){}
-                            try {data.rank = hyp.player.rank || "NULL";} catch (_){}
 
-                            try {if (hyp.player.monthlyPackageRank === 'SUPERSTAR') data.paidRank = 'MVP_PLUS_PLUS';} catch (_){}
-
-                                
-                            let bedwars = {}
-                            try {bedwars = hyp.player.stats.Bedwars} catch (_){}
-                            const tfinals = bedwars.final_kills_bedwars || "-";
-                            const tbeds = bedwars.beds_broken_bedwars || "-";
-                            const twins = bedwars.wins_bedwars || "-";
-                            const tkills = bedwars.kills_bedwars || "-";
-                            const tdeaths = bedwars.deaths_bedwars || "-";
-                            const tlosses = bedwars.losses_bedwars || "-";
-                            const tfinald = bedwars.final_deaths_bedwars || "-";
-                            const tbedslost = bedwars.beds_lost_bedwars || "-";
-                            
-                            if (tfinals + tbeds + twins + tkills + tdeaths + tlosses + tfinald > 0) {
-                                data.bwStats = {
-                                    finalKills: tfinals,
-                                    bedsBroken: tbeds,
-                                    wins: twins,
-                                    kills: tkills,
-                                    deaths: tdeaths,
-                                    losses: tlosses,
-                                    finalDeaths: tfinald,
-                                    bedsLost: tbedslost,
-                                }
+                        fetch(apiURL + uuid).then(res => res.json()).then(hyp => {
+                            console.log("recv hypixel data")
+                            let data = {
+                                bwStats: {}
                             }
-                            try {if (hyp.player.achievements.bedwars_level >= 0) data.bwStats.star = hyp.player.achievements.bedwars_level;}
-                            catch (_){data.bwStats.star = 0;}
-                        } else {
-                            data.name = player;
-                            data.rank = "NULL";
-                            data.paidRank = "NON";
-                        }
-                        bwPlayers.push(data)
-                        forLoopRuns--
-                        if (forLoopRuns == 0) {
-                            /*console.log(
-                                `bwPlayers (len=${bwPlayers.length}):`,
-                                bwPlayers
-                            )*/
-                            toRenderer({
-                                type: 'bwPlayers',
-                                data: bwPlayers
-                            })
-                        }
+                            data.nick = nick;
+                            if (hyp.player === null || nick === true) data.nick = true;
+                            if (!nick) {
+                                data.uuid = uuid;
+                                data.name = player;
+                                try {data.paidRank = hyp.player.newPackageRank || "NON";} catch (_){}
+                                try {data.rank = hyp.player.rank || "NULL";} catch (_){}
+
+                                try {if (hyp.player.monthlyPackageRank === 'SUPERSTAR') data.paidRank = 'MVP_PLUS_PLUS';} catch (_){}
+
+                                    
+                                let bedwars = {}
+                                try {bedwars = hyp.player.stats.Bedwars} catch (_){}
+                                const tfinals = bedwars.final_kills_bedwars || "-";
+                                const tbeds = bedwars.beds_broken_bedwars || "-";
+                                const twins = bedwars.wins_bedwars || "-";
+                                const tkills = bedwars.kills_bedwars || "-";
+                                const tdeaths = bedwars.deaths_bedwars || "-";
+                                const tlosses = bedwars.losses_bedwars || "-";
+                                const tfinald = bedwars.final_deaths_bedwars || "-";
+                                const tbedslost = bedwars.beds_lost_bedwars || "-";
+                                
+                                if (tfinals + tbeds + twins + tkills + tdeaths + tlosses + tfinald > 0) {
+                                    data.bwStats = {
+                                        finalKills: tfinals,
+                                        bedsBroken: tbeds,
+                                        wins: twins,
+                                        kills: tkills,
+                                        deaths: tdeaths,
+                                        losses: tlosses,
+                                        finalDeaths: tfinald,
+                                        bedsLost: tbedslost,
+                                    }
+                                }
+                                try {if (hyp.player.achievements.bedwars_level >= 0) data.bwStats.star = hyp.player.achievements.bedwars_level;}
+                                catch (_){data.bwStats.star = 0;}
+                            } else {
+                                data.name = player;
+                                data.rank = "NULL";
+                                data.paidRank = "NON";
+                            }
+                            bwPlayers.push(data)
+                            forLoopRuns--
+                            if (forLoopRuns == 0) {
+                                /*console.log(
+                                    `bwPlayers (len=${bwPlayers.length}):`,
+                                    bwPlayers
+                                )*/
+                                toRenderer({
+                                    type: 'bwPlayers',
+                                    data: bwPlayers
+                                })
+                            }
+                        })
                     })
-                })
+                } catch (_) {
+                    bwPlayers.push({
+                            nick: true,
+                            name: player,
+                            bwStats: {
+                                star:0,
+                            },
+                            rank: "NULL",
+                            paidRank:"NON",
+                        })
+                    forLoopRuns--
+                    if (forLoopRuns == 0) {
+                        toRenderer({
+                            type: 'bwPlayers',
+                            data: bwPlayers
+                        })
+                    }
+                }
             }
             
         }
@@ -257,8 +297,11 @@ function runTail(path) {
 }
 
 ipcMain.on('config', (event,data) => {
-    config = data;
-    fs.writeFile(configPath, JSON.stringify(data), (err) => {
+    enableAutowho = config.autowho;
+    config = {...config, ...data};
+    console.log(config)
+
+    fs.writeFile(configPath, JSON.stringify(config), (err) => {
         if (err) throw err;
     });
 })
@@ -277,4 +320,19 @@ const updateRPCDescription = (state,desc) => {
         instance: false,
         smallImageKey: 'bed',
     })
+}
+const findIGN = (path) => {
+    var logContents = fs.readFileSync(path, 'utf8');
+    if (path.includes('lunarclient')) {
+            //Lunar Client initially logs you in as a cracked account with an IGN of "Player" and some numbers
+        for (line of logContents.split('\n')) {
+            const x= line.match(/(?<=\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[LC\] Setting user: ).+/g);
+            if (x) return x[0];
+        }
+    } else {
+        for (line of logContents.split('\n')) {
+            const x = logContents.match(/(?<=\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: Setting user: ).+/g);
+            if (x) return x[0];
+        }
+    }
 }

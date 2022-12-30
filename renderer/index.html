@@ -25,8 +25,8 @@
                 <option value="laby">LabyMod</option>
                 <!--<option value="other">Other/Alternate game directory</option>!-->
             </select>
+            
             <table id="user-table" class="inconsolata"></table>
-            <!--add a slider that will change the opacity of the bg-->
             <table id="settings">
                 <tr>
                     <td>
@@ -52,6 +52,14 @@
                             <button id="reset" onclick="document.getElementById('user-table').innerHTML=''; api.send('resize', {height : 125})">Reset</button>
                         </div>
                     </td>
+                    <td>
+                        <!--checkbox-->
+                        <div class="bl">
+                            <label for="autowho">Enable Autowho</label>
+                            <input type="checkbox" id="autowho" name="autowho" onclick="handleAutowho(this.checked)" checked>
+                            
+                        </div>
+                    </td>
                 </tr>
                 
                 
@@ -66,6 +74,7 @@
             <div id="updateDiv" style="display:none">
                 <span id="updateText">placeholder</span>
             </div>
+            
              
         </div>
 

@@ -59,9 +59,6 @@ const generateBedwarsUserTable = (users) => {
     users.sort((a, b) => {
         return b.bwStats.star - a.bwStats.star;
     })
-    if (users.length > 1) {
-        api.send("resize", {height : 130 + (users.length * 25)})
-    }
     
     console.log(users)
     for (const user of users) {
@@ -94,6 +91,7 @@ const generateBedwarsUserTable = (users) => {
                 
         table.appendChild(row);
     }
+    resize();
 }
 
 const getBedwarsStarColour = (star) => {
@@ -161,6 +159,7 @@ const getNameColour = (user) => {
 const handleResourcePack = (name) => {
     document.getElementById('packDiv').style.display = 'block';
     document.getElementById('packName').innerHTML = name
+    resize()
 }
 
 const handleOpacity = (opacity) => {
@@ -170,13 +169,15 @@ const handleOpacity = (opacity) => {
 const checkForConfig = () => {
     api.getConfig().then((data) => {
         const config = data.config;
-        console.log(data)
+        //console.log(data)
         if (config.api_key === "" || config.api_key === undefined || config.api_key === null) {
             document.querySelector('#apikey').style.display = 'block';  
         }
         if (data.version !== undefined) {
-            console.log("asdf")
             handleVersion(data.version)
+        }
+        if (config.autowho === false) {
+            document.querySelector('#autowho').checked = false;
         }
     })
 }
@@ -227,4 +228,13 @@ const handleFont = (font) => {
     currentFont = font;
     document.getElementById("user-table").classList.remove(oldFont);
     document.getElementById("user-table").classList.add(font);
+    resize();
+}
+const resize = (extra=25) => {
+    const bodyHeight = document.body.getBoundingClientRect()
+    api.send("resize", {height : bodyHeight.height + extra})
+}
+const handleAutowho = (checked) => {
+    api.send('config', {autowho: checked})
+    console.log(checked)
 }
