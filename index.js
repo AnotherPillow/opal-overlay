@@ -10,7 +10,7 @@ const configPath = path.join(app.getPath('userData'), 'config.json');
 if (!fs.existsSync(configPath)) 
     fs.writeFileSync(configPath, JSON.stringify({api_key:''}));
 
-const vbsCWD = app.isPackaged ? path.join(process.resourcesPath, 'app.asar.unpacked', 'src') : path.join(__dirname, 'SRC');
+const vbsCWD = app.isPackaged ? path.join(process.resourcesPath, 'src') : path.join(__dirname, 'SRC');
 
 let config = require(configPath);
 if (!config.autowho) config.autowho = true;

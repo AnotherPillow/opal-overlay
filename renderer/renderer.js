@@ -230,7 +230,7 @@ const handleFont = (font) => {
     document.getElementById("user-table").classList.add(font);
     resize();
 }
-const resize = (extra=25) => {
+const resize = (extra=30) => {
     const bodyHeight = document.body.getBoundingClientRect()
     api.send("resize", {height : bodyHeight.height + extra})
 }
