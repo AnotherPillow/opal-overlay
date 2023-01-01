@@ -195,77 +195,94 @@ function runTail(path) {
             
             for (const player of players) {
                 try {
+                    let nick = false;
                     let r;
-                    fetch("https://api.mojang.com/users/profiles/minecraft/" + player).then(res=>r=res).then(res=>res.json()).then(json=>{
-                        let nick = false;
-                        
-                        if (json.errorMessage === "Couldn't find any profile with that name" || r.status === 204) nick = true;
-
-                        let uuid;
-                        if (json.id && !nick) uuid = json.id;
-                        else {
-                            nick=true;
-                            uuid = "NULL";
+                    let j;
+                    fetch("https://api.mojang.com/users/profiles/minecraft/" + player).then(res=>{
+                        if (res.status === 200) {
+                            j = res.json();
+                        } else {
+                            //make j a promise that resolves to null
+                            j = new Promise((resolve, reject) => {
+                                resolve({
+                                    name: player,
+                                    id: "NULL",
+                                });
+                            })
                         }
-
-                        fetch(apiURL + uuid).then(res => res.json()).then(hyp => {
-                            console.log("recv hypixel data")
-                            let data = {
-                                bwStats: {}
+                        j.then(json=>{
+                            //console.log(json)
+                        
+                            if (res.status === 204) nick = true;
+                            let uuid;
+                            try {
+                                if (json.id && !nick) uuid = json.id;
+                            } catch (_) {
+                                uuid = "NULL"
                             }
-                            data.nick = nick;
-                            if (hyp.player === null || nick === true) data.nick = true;
-                            if (!nick) {
-                                data.uuid = uuid;
-                                data.name = player;
-                                try {data.paidRank = hyp.player.newPackageRank || "NON";} catch (_){}
-                                try {data.rank = hyp.player.rank || "NULL";} catch (_){}
 
-                                try {if (hyp.player.monthlyPackageRank === 'SUPERSTAR') data.paidRank = 'MVP_PLUS_PLUS';} catch (_){}
-
-                                    
-                                let bedwars = {}
-                                try {bedwars = hyp.player.stats.Bedwars} catch (_){}
-                                const tfinals = bedwars.final_kills_bedwars || "-";
-                                const tbeds = bedwars.beds_broken_bedwars || "-";
-                                const twins = bedwars.wins_bedwars || "-";
-                                const tkills = bedwars.kills_bedwars || "-";
-                                const tdeaths = bedwars.deaths_bedwars || "-";
-                                const tlosses = bedwars.losses_bedwars || "-";
-                                const tfinald = bedwars.final_deaths_bedwars || "-";
-                                const tbedslost = bedwars.beds_lost_bedwars || "-";
-                                
-                                if (tfinals + tbeds + twins + tkills + tdeaths + tlosses + tfinald > 0) {
-                                    data.bwStats = {
-                                        finalKills: tfinals,
-                                        bedsBroken: tbeds,
-                                        wins: twins,
-                                        kills: tkills,
-                                        deaths: tdeaths,
-                                        losses: tlosses,
-                                        finalDeaths: tfinald,
-                                        bedsLost: tbedslost,
-                                    }
+                            fetch(apiURL + uuid).then(res => res.json()).then(hyp => {
+                                console.log("recv hypixel data")
+                                let data = {
+                                    bwStats: {}
                                 }
-                                try {if (hyp.player.achievements.bedwars_level >= 0) data.bwStats.star = hyp.player.achievements.bedwars_level;}
-                                catch (_){data.bwStats.star = 0;}
-                            } else {
-                                data.name = player;
-                                data.rank = "NULL";
-                                data.paidRank = "NON";
-                            }
-                            bwPlayers.push(data)
-                            forLoopRuns--
-                            if (forLoopRuns == 0) {
-                                /*console.log(
-                                    `bwPlayers (len=${bwPlayers.length}):`,
-                                    bwPlayers
-                                )*/
-                                toRenderer({
-                                    type: 'bwPlayers',
-                                    data: bwPlayers
-                                })
-                            }
+                                data.nick = nick;
+                                if (hyp.player === null || nick === true) data.nick = true;
+                                if (!nick) {
+                                    data.uuid = uuid;
+                                    data.name = player;
+                                    
+                                    data.channel = undefined;
+                                    try {data.channel = hyp.player.channel} catch (_){}
+                                    try {data.paidRank = hyp.player.newPackageRank || "NON";} catch (_){}
+                                    try {data.rank = hyp.player.rank || "NULL";} catch (_){}
+
+                                    try {if (hyp.player.monthlyPackageRank === 'SUPERSTAR') data.paidRank = 'MVP_PLUS_PLUS';} catch (_){}
+
+                                        
+                                    let bedwars = {}
+                                    try {bedwars = hyp.player.stats.Bedwars} catch (_){}
+                                    const tfinals = bedwars.final_kills_bedwars || "-";
+                                    const tbeds = bedwars.beds_broken_bedwars || "-";
+                                    const twins = bedwars.wins_bedwars || "-";
+                                    const tkills = bedwars.kills_bedwars || "-";
+                                    const tdeaths = bedwars.deaths_bedwars || "-";
+                                    const tlosses = bedwars.losses_bedwars || "-";
+                                    const tfinald = bedwars.final_deaths_bedwars || "-";
+                                    const tbedslost = bedwars.beds_lost_bedwars || "-";
+                                    
+                                    if (tfinals + tbeds + twins + tkills + tdeaths + tlosses + tfinald > 0) {
+                                        data.bwStats = {
+                                            finalKills: tfinals,
+                                            bedsBroken: tbeds,
+                                            wins: twins,
+                                            kills: tkills,
+                                            deaths: tdeaths,
+                                            losses: tlosses,
+                                            finalDeaths: tfinald,
+                                            bedsLost: tbedslost,
+                                        }
+                                    }
+                                    try {if (hyp.player.achievements.bedwars_level >= 0) data.bwStats.star = hyp.player.achievements.bedwars_level;}
+                                    catch (_){data.bwStats.star = 0;}
+                                } else {
+                                    data.name = player;
+                                    data.rank = "NULL";
+                                    data.paidRank = "NON";
+                                }
+                                bwPlayers.push(data)
+                                forLoopRuns--
+                                if (forLoopRuns == 0) {
+                                    /*console.log(
+                                        `bwPlayers (len=${bwPlayers.length}):`,
+                                        bwPlayers
+                                    )*/
+                                    toRenderer({
+                                        type: 'bwPlayers',
+                                        data: bwPlayers
+                                    })
+                                }
+                            })
                         })
                     })
                 } catch (_) {

@@ -77,7 +77,7 @@ const generateBedwarsUserTable = (users) => {
                 //`<td>${user.bwStats.bedsBroken}</td>`+
                 `<td>${BBLR === 'NaN' ? '?' : BBLR}&nbsp</td>`+
                 `<td>${WLR === 'NaN' ? '?' : WLR}&nbsp</td>`+
-                `<td> - </td>`
+                `<td>${user.channel === 'PARTY' ? 'PRTY' : ' - '}</td>`
             )
         else if (user.nick === true) row.innerHTML =
             (
@@ -92,6 +92,7 @@ const generateBedwarsUserTable = (users) => {
         table.appendChild(row);
     }
     resize();
+    setTimeout(() => {resize();},100);
 }
 
 const getBedwarsStarColour = (star) => {
