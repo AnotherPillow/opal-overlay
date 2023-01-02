@@ -24,6 +24,7 @@ A Hypixel Bedwars overlay.
 - Choose between Minecraft font and Inconsolata font for the table.
 - Automatically runs `/who` when you join a bedwars game and populates the overlay.
 - Tracks current session stats
+- Commands using `/w`, see below.
 
 ## Commands
 
