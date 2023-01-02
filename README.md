@@ -23,6 +23,14 @@ A Hypixel Bedwars overlay.
 - Discord RPC support.
 - Choose between Minecraft font and Inconsolata font for the table.
 - Automatically runs `/who` when you join a bedwars game and populates the overlay.
+- Tracks current session stats
+
+## Commands
+
+- `/who` - Populates the overlay with the players in the game.
+- `/w c` resets the table.
+- `/w s` resets the current session stats.
+- `/w ![IGN]` adds a user to the overlay who is not in the game.
 
 ## Development/Contributing
 
@@ -34,6 +42,10 @@ A Hypixel Bedwars overlay.
 6. Install Python so that it can be used in the build script.
 7. To test if your changes work when built, run `npm run build` and run the `Opal Overlay.exe` in the `dist` folder.
 8. Create a pull request.
+
+## Credits
+
+![Abyss Overlay](https://github.com/Chit132/abyss-overlay) for the star colour code and the autowho script.
 
 ## Images
 

@@ -51,7 +51,7 @@ let win;
 function createWindow () {;
     win = new BrowserWindow({
         width: 500,
-        height: 125,
+        height: 150,
         transparent: true,
         frame: false,
         webPreferences: {
@@ -177,12 +177,36 @@ function runTail(path) {
         } else if (/^\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[CHAT\] ([A-Za-z0-9_]+) has joined \(\d+\/\d+\)!$/.test(data)
         && data.includes(IGN)) {
             if (enableAutowho) {
-                console.log(BrowserWindow.getFocusedWindow())
                 exec('wscript who.vbs', {cwd: vbsCWD}, (err, stdout, stderr) => {
                     if (err !== null) dialog.showErrorBox("Error",
                         "An error occurred while trying to run autowho. Please run /who manually.");
                 });
             }
+        } else if (/^\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[CHAT\] Can't find a player by the name of '(.+)'$/.test(data)) {
+            //extract the name of the player that couldn't be found
+            let name = data.match(/^\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[CHAT\] Can't find a player by the name of '(.+)'$/)[1];
+            //console.log(name);
+
+            if (name.startsWith('!') || name==='c' || name ==='s') {
+                let user = name.substring(1);
+                if (name==='c') return toRenderer({
+                    type: "clear_table",
+                    data: null
+                })
+                if (name==='s') return toRenderer({
+                    type: "clear_session",
+                    data: null
+                })
+                let d = generatePlayer(user);
+                d.then((data) => {
+                    toRenderer({
+                        type: 'addBwPlayer',
+                        data: data
+                    })
+                })
+            }
+        } else if (/^\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[CHAT\] .+ (was .+ by|by|with) .+$/.test(data)) {
+            foundKill(data,IGN);
         }
         if (players.length >= 1) {
             updateRPCDescription('Playing Bedwars', 'Using Opal Overlay');
@@ -196,7 +220,6 @@ function runTail(path) {
             for (const player of players) {
                 try {
                     let nick = false;
-                    let r;
                     let j;
                     fetch("https://api.mojang.com/users/profiles/minecraft/" + player).then(res=>{
                         if (res.status === 200) {
@@ -277,7 +300,7 @@ function runTail(path) {
                                         `bwPlayers (len=${bwPlayers.length}):`,
                                         bwPlayers
                                     )*/
-                                    toRenderer({
+                                    return toRenderer({
                                         type: 'bwPlayers',
                                         data: bwPlayers
                                     })
@@ -297,7 +320,7 @@ function runTail(path) {
                         })
                     forLoopRuns--
                     if (forLoopRuns == 0) {
-                        toRenderer({
+                        return toRenderer({
                             type: 'bwPlayers',
                             data: bwPlayers
                         })
@@ -316,7 +339,7 @@ function runTail(path) {
 ipcMain.on('config', (event,data) => {
     enableAutowho = config.autowho;
     config = {...config, ...data};
-    console.log(config)
+    //console.log(config)
 
     fs.writeFile(configPath, JSON.stringify(config), (err) => {
         if (err) throw err;
@@ -352,4 +375,193 @@ const findIGN = (path) => {
             if (x) return x[0];
         }
     }
+}
+const generatePlayer = (player) => {
+    config = JSON.parse(fs.readFileSync(configPath));
+    
+    const apiURL = 'https://api.hypixel.net/player?key=' + config.api_key + '&uuid=';
+    let returnData;
+    try {
+        let nick = false;
+        let j;
+        fetch("https://api.mojang.com/users/profiles/minecraft/" + player).then(res=>{
+            if (res.status === 200) {
+                j = res.json();
+            } else {
+                j = new Promise((resolve, reject) => {
+                    resolve({
+                        name: player,
+                        id: "NULL",
+                    });
+                })
+            }
+            j.then(json=>{
+            
+                if (res.status === 204) nick = true;
+                let uuid;
+                try {
+                    if (json.id && !nick) uuid = json.id;
+                } catch (_) {
+                    uuid = "NULL"
+                }
+
+                fetch(apiURL + uuid).then(res => res.json()).then(hyp => {
+                    console.log("recv hypixel data")
+                    let data = {
+                        bwStats: {}
+                    }
+                    data.nick = nick;
+                    if (hyp.player === null || hyp.player === undefined || nick === true) data.nick = true;
+                    if (!nick) {
+                        data.uuid = uuid;
+                        data.name = player;
+                        
+                        data.channel = 'opal-extra'
+                        try {data.paidRank = hyp.player.newPackageRank || "NON";} catch (_){}
+                        try {data.rank = hyp.player.rank || "NULL";} catch (_){}
+
+                        try {if (hyp.player.monthlyPackageRank === 'SUPERSTAR') data.paidRank = 'MVP_PLUS_PLUS';} catch (_){}
+
+                            
+                        let bedwars = {}
+                        try {bedwars = hyp.player.stats.Bedwars} catch (_){}
+                        const tfinals = bedwars.final_kills_bedwars || "-";
+                        const tbeds = bedwars.beds_broken_bedwars || "-";
+                        const twins = bedwars.wins_bedwars || "-";
+                        const tkills = bedwars.kills_bedwars || "-";
+                        const tdeaths = bedwars.deaths_bedwars || "-";
+                        const tlosses = bedwars.losses_bedwars || "-";
+                        const tfinald = bedwars.final_deaths_bedwars || "-";
+                        const tbedslost = bedwars.beds_lost_bedwars || "-";
+                        
+                        if (tfinals + tbeds + twins + tkills + tdeaths + tlosses + tfinald > 0) {
+                            data.bwStats = {
+                                finalKills: tfinals,
+                                bedsBroken: tbeds,
+                                wins: twins,
+                                kills: tkills,
+                                deaths: tdeaths,
+                                losses: tlosses,
+                                finalDeaths: tfinald,
+                                bedsLost: tbedslost,
+                            }
+                        }
+                        try {if (hyp.player.achievements.bedwars_level >= 0) data.bwStats.star = hyp.player.achievements.bedwars_level;}
+                        catch (_){data.bwStats.star = 0;}
+                    } else {
+                        data.name = player;
+                        data.rank = "NULL";
+                        data.paidRank = "NON";
+                    }
+                    //console.log(data)
+                    returnData = data;
+                })
+            })
+        })
+    } catch (_) {
+        returnData = {
+            nick: true,
+            name: player,
+            bwStats: {
+                star:0,
+            },
+            rank: "NULL",
+            paidRank:"NON",
+        }
+    }
+    return new Promise((resolve, reject) => {
+        const interval = setInterval(() => {
+            if (returnData) {
+                clearInterval(interval);
+                resolve(returnData);
+            }
+        }, 10);
+    })
+}
+
+const foundKill = (data,IGN) => {
+    var action = ''
+    var message = data.match(/^\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[CHAT\] (.+)$/)[1];
+
+    if (!message) return;
+
+    if (message.toUpperCase().startsWith('BED DESTRUCTION') || /[A-Z]+ BED/.test(message.toUpperCase())) {
+        action = 'bed_break'
+    } else if (message.toUpperCase().includes('FINAL KILL')) {
+        action = 'final_kill'
+    } else if (message.toUpperCase().includes("'S GOLEM") || message.toUpperCase().includes("DREAM DEFENDER")) {
+        action = 'golem_kill'
+    } else {
+        action = 'kill'
+    }
+
+
+    if (message.includes(".") || message.includes("!")) {
+        message = message.replace(".", "");
+        message = message.replace("!", "");
+        }
+
+        const components = message.split(' ');
+
+        let victim;
+        if (action === 'bed_break') victim = components[3] + " " + components[4];
+        else victim = components[0];
+
+        let killer;
+        if ((action === 'kill' && !message.includes("#")) || action === 'bed_break')
+            killer = components[components.length - 1];
+        else if ((action === 'final_kill' && message.includes("#")))
+            killer = components[components.length - 5].replace("'s", "");
+        else if (action === 'golem_kill')
+            killer = components[components.length - 2].replace("'s", "");
+        else if (action === 'final_kill')
+            killer = components[components.length - 3]; 
+        else
+            killer = components[components.length - 1];
+
+
+
+            /*console.log(
+                `Killer: ${killer} - ${action}\n`,
+                `Victim: ${victim} - ${action}`
+            )*/
+        let content = {
+            killer: killer,
+            victim: victim,
+            type: action
+        }
+        if (action === 'final_kill' && victim === IGN) {
+            content['self_type'] = 'final_death'
+        } else if (action === 'final_kill' && killer === IGN) {
+            content['self_type'] = 'final_kill'
+        } else if (action === 'kill' && killer === IGN) {
+            content['self_type'] = 'kill'
+        } else if (action === 'kill' && victim === IGN) {
+            content['self_type'] = 'death'
+        } else if (action === 'bed_break' && killer === IGN) {
+            content['self_type'] = 'bed_break'
+        } else if (action === 'bed_break' && victim === "Your Bed") {
+            content['self_type'] = 'bed_lose'
+        } else {
+            content['self_type'] = null
+        }
+
+            /*
+            death
+            kill
+            final_death
+            final_kill
+            bed_break
+            bed_lose
+            undefined
+             */
+
+        //console.log(content)
+
+        if (content.self_type === undefined) return;
+        
+        toRenderer({
+            type: "stats",
+            data: content
+        });
 }

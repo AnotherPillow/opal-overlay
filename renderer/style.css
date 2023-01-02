@@ -41,6 +41,9 @@ a {
     text-decoration: none;
     color: orange;
 }
+a.offOrange {
+    color: rgb(163, 131, 72);
+}
 .orange {
     color: orange;
 }

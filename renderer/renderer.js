@@ -1,5 +1,6 @@
 var currentFont = 'inconsolata'
 
+
 function handleClient(path=false, gen) {
     const client = document.getElementById('client').value;
     
@@ -12,20 +13,31 @@ function handleClient(path=false, gen) {
     api.send('client', path);
 }
 
-setInterval(() => {
-    api.toRenderer().then((data) => {
-        switch (data.type) {
-            case 'bwPlayers':
-                generateBedwarsUserTable(data.data);
-                break;
-            case 'resourcepack':
-                handleResourcePack(data.data);
-                break;
-            default:
-                break;
-        }
-    })
-}, 1000)
+api.toRenderer('renderer', (ev, data) => {
+    switch (data.type) {
+        case 'bwPlayers':
+            generateBedwarsUserTable(data.data);
+            break;
+        case 'resourcepack':
+            handleResourcePack(data.data);
+            break;
+        case 'addBwPlayer':
+            addBwPlayer(data.data);
+            break;
+        case 'clear_table':
+            resetTable();
+            break;
+        case 'clear_session':
+            clearSession();
+            break;
+        case 'stats':
+            handleStats(data.data);
+            break;
+        default:
+            break;
+    }
+    return;
+})
 
 const generateBedwarsUserTable = (users) => {
     /*
@@ -62,37 +74,13 @@ const generateBedwarsUserTable = (users) => {
     
     console.log(users)
     for (const user of users) {
-        const row = document.createElement('tr');
-        const FKDR = (user.bwStats.finalKills/user.bwStats.finalDeaths).toFixed(2) || 0;
-        const BBLR = (user.bwStats.bedsBroken/user.bwStats.bedsLost).toFixed(2) || 0;
-        const WLR = (user.bwStats.wins/user.bwStats.losses).toFixed(2) || 0;
-        if (user.nick === false) row.innerHTML = 
-            (   
-                `<td><img src="https://crafatar.com/avatars/${user.uuid}?size=16&overlay"/></td>`+
-                `<td>${getBedwarsStarColour(user.bwStats.star || 0)} <span style="color: ${getNameColour(user)}">${user.name}</span>&nbsp</td>`+
-                //set class based on if the ratio is less than or greather than 1
-
-                `<td class="${FKDR >= 2 ? 'red' : ''}">${FKDR === 'NaN' ? '?' : FKDR}&nbsp</td>`+
-
-                //`<td>${user.bwStats.bedsBroken}</td>`+
-                `<td>${BBLR === 'NaN' ? '?' : BBLR}&nbsp</td>`+
-                `<td>${WLR === 'NaN' ? '?' : WLR}&nbsp</td>`+
-                `<td>${user.channel === 'PARTY' ? 'PRTY' : ' - '}</td>`
-            )
-        else if (user.nick === true) row.innerHTML =
-            (
-                `<td><img src="https://crafatar.com/avatars/d3c47f6fae3a45c1ad7ce2c762b03ae6?size=16&overlay"/></td>`+
-                `<td><span style="color: #AAAAAA">[NICK]</span> <span style="color: ${getNameColour(user)}">${user.name}</span>&nbsp</td>`+
-                `<td> - &nbsp</td>`+
-                `<td> - &nbsp</td>`+
-                `<td> - &nbsp</td>`+
-                `<td>NICK</td>`
-            )
-                
-        table.appendChild(row);
+        //check if it's the last element
+        if (users.indexOf(user) == users.length - 1) 
+            table.appendChild(generateRow(user,true));
+        else table.appendChild(generateRow(user));
+        
     }
     resize();
-    setTimeout(() => {resize();},100);
 }
 
 const getBedwarsStarColour = (star) => {
@@ -134,8 +122,8 @@ const getNameColour = (user) => {
     if (user.nick) return '#AAAAAA'
     const rank = user.paidRank;
     if (user.rank !== "NULL") {
-        switch (rank) {
-            case 'YOUTUEBR':
+        switch (user.rank) {
+            case 'YOUTUBER':
                 return '#FF5555';
             case 'ADMIN':
                 return '#FF5555';
@@ -168,7 +156,7 @@ const handleOpacity = (opacity) => {
     body.style.backgroundColor = `rgba(73, 73, 73, ${opacity/100})`;
 }
 const checkForConfig = () => {
-    api.getConfig().then((data) => {
+    api.getConfig('conf',(event,data)=> {
         const config = data.config;
         //console.log(data)
         if (config.api_key === "" || config.api_key === undefined || config.api_key === null) {
@@ -204,23 +192,24 @@ const handleVersion = (version) => {
             releaseVersion,
             version,
         )
+        let text;
 
         if (releaseVersion !== version) {
             for (let i = 0; i < releaseParts.length; i++) {
                 if (parseInt(releaseParts[i]) > parseInt(versionParts[i])) {
-                    document.querySelector('#updateDiv').style.display = 'block';
-                    document.querySelector('#updateText').innerHTML = `<span>New version available! <a id="downloadNewVersion" href="https://github.com/AnotherPillow/opal-overlay/releases/download/v${releaseVersion}/Opal.Overlay-win32-x64.zip">Download v${releaseVersion}</a></span>`
+                    text = `${version}<br>[<a class="offOrange" href="https://github.com/AnotherPillow/opal-overlay/releases/download/v${releaseVersion}/Opal.Overlay-win32-x64.zip">Update</a>]`
                     break;
                 } else if (parseInt(releaseParts[i]) < parseInt(versionParts[i])) {
-                    document.querySelector('#updateDiv').style.display = 'block';
-                    document.querySelector('#updateText').innerHTML = `<span>You are running a development version!</span><span class="orange"> v${version}</span>`
+                    text = `v${version}<br>[Dev]`
                     break;
                 }
             }
         } else {
-            document.querySelector('#updateDiv').style.display = 'block';
-            document.querySelector('#updateText').innerHTML = `<span>You are running the latest version!</span><span> v${version}</span>`
+            text = `v${version}<br>[Latest]`
         }
+
+        document.querySelector('#version').style.display = 'block';
+        document.querySelector('#version').innerHTML = text
     })
 }
 const handleFont = (font) => {
@@ -231,11 +220,124 @@ const handleFont = (font) => {
     document.getElementById("user-table").classList.add(font);
     resize();
 }
-const resize = (extra=30) => {
+const resize = (extra=50) => {
+    if (document.getElementById('packDiv').style.display !== 'none') extra += 30;
+    if (document.getElementById('sessionDiv').style.display !== 'none') extra += 30;
     const bodyHeight = document.body.getBoundingClientRect()
     api.send("resize", {height : bodyHeight.height + extra})
 }
 const handleAutowho = (checked) => {
     api.send('config', {autowho: checked})
     console.log(checked)
+}
+const resetTable = () => {
+    document.getElementById('user-table').innerHTML='';
+    resize()
+}
+const generateRow = (user,re=false) => {
+    const row = document.createElement('tr');
+    const FKDR = (user.bwStats.finalKills/user.bwStats.finalDeaths).toFixed(2) || 0;
+    const BBLR = (user.bwStats.bedsBroken/user.bwStats.bedsLost).toFixed(2) || 0;
+    const WLR = (user.bwStats.wins/user.bwStats.losses).toFixed(2) || 0;
+    let tag;
+    switch (user.channel) {
+        case 'PARTY':
+            tag = 'PRTY';
+            break;
+        case 'opal-extra':
+            tag = 'EX';
+            break;
+        default:
+            tag = ' - ';
+            break;
+    }
+    if (user.nick === false) row.innerHTML = 
+        (   
+            `<td><img src="https://crafatar.com/avatars/${user.uuid}?size=16&overlay"/></td>`+
+            `<td>${getBedwarsStarColour(user.bwStats.star || 0)} <span style="color: ${getNameColour(user)}">${user.name}</span>&nbsp</td>`+
+            //set class based on if the ratio is less than or greather than 1
+
+            `<td class="${FKDR >= 2 ? 'red' : ''}">${FKDR === 'NaN' ? '?' : FKDR}&nbsp</td>`+
+
+            //`<td>${user.bwStats.bedsBroken}</td>`+
+            `<td>${BBLR === 'NaN' ? '?' : BBLR}&nbsp</td>`+
+            `<td>${WLR === 'NaN' ? '?' : WLR}&nbsp</td>`+
+            `<td>${tag}</td>`
+        )
+    else if (user.nick === true) row.innerHTML =
+        (
+            `<td><img src="https://crafatar.com/avatars/d3c47f6fae3a45c1ad7ce2c762b03ae6?size=16&overlay"/></td>`+
+            `<td><span style="color: #AAAAAA">[NICK]</span> <span style="color: ${getNameColour(user)}">${user.name}</span>&nbsp</td>`+
+            `<td> - &nbsp</td>`+
+            `<td> - &nbsp</td>`+
+            `<td> - &nbsp</td>`+
+            `<td>NICK</td>`
+        )
+    if (re) row.onload = () => {resize()}
+    return row;
+}
+const addBwPlayer = (bwStats) => {
+    const table = document.getElementById('user-table');
+    table.appendChild(generateRow(bwStats,true));
+    resize();
+}
+const nullSession = {
+    kills:0,
+    deaths:0,
+    fkdr:0,
+    bblr:0,
+    kdr:0,
+    final_kills:0,
+    final_deaths:0,
+    beds_broken:0,
+    beds_lost:0,
+}
+let sessionStats =  nullSession;
+const handleStats = (stats) => {
+    let row = document.getElementById('sessionTR');
+    const sessionDiv = document.getElementById('sessionDiv');
+
+    if (!stats.self_type) return;
+    else if (stats.self_type === 'kill')
+        sessionStats.kills++;
+    else if (stats.self_type === 'death')
+        sessionStats.deaths++;
+    else if (stats.self_type === 'final_kill')
+        sessionStats.final_kills++;
+    else if (stats.self_type === 'final_death')
+        sessionStats.final_deaths++;
+    else if (stats.self_type === 'bed_broken')
+        sessionStats.beds_broken++;
+    else if (stats.self_type === 'bed_lost')
+        sessionStats.beds_lost++;
+
+    row.innerHTML = ''
+
+    sessionStats.fkdr = (sessionStats.final_kills/sessionStats.final_deaths).toFixed(2) || 0;
+    sessionStats.bblr = (sessionStats.beds_broken/sessionStats.beds_lost).toFixed(2) || 0;
+    sessionStats.kdr = (sessionStats.kills/sessionStats.deaths).toFixed(2) || 0;
+
+    sessionStats.fkdr = checkForNaNInfity(sessionStats.fkdr)
+    sessionStats.bblr = checkForNaNInfity(sessionStats.bblr)
+    sessionStats.kdr = checkForNaNInfity(sessionStats.kdr)
+
+    //check if infinity
+    
+
+    row.innerHTML = `<td>${sessionStats.fkdr} - ${sessionStats.kdr} - ${sessionStats.final_kills} - ${sessionStats.beds_broken}</td>`
+
+    sessionDiv.style.display = 'block';
+    resize();
+}
+
+const checkForNaNInfity = (num) => {
+    if (num === Infinity || num === NaN) return 0;
+    else return num;
+}
+const clearSession = () => {
+    sessionStats = nullSession;
+    const sessionDiv = document.getElementById('sessionDiv');
+    const row = document.getElementById('sessionTR');
+    row.innerHTML = '';
+    sessionDiv.style.display = 'none';
 }

@@ -15,6 +15,8 @@
                 <button id="exit" onclick="api.send('exit')">X</button>
             </div> 
             <h1 class="blue_white_gradient r bl" id="opal">Opal</h1>
+            <br>
+            <h1 class="orange r" id="version" style="font-size: 0.7em;display:none;">1.2.3</h1>
             
             <select id="client" onchange="handleClient(0, 1)" class="bl">
                 <option value="vanilla">Vanilla</option>
@@ -27,6 +29,12 @@
             </select>
             
             <table id="user-table" class="inconsolata"></table>
+            <div id="sessionDiv" style="display:none;">
+                <table id="sessionTable">
+                    <tr><th>FKDR - KDR - Finals - Kills</th></tr>
+                    <tr id="sessionTR"></tr>
+                </table>
+            </div>  
             <table id="settings">
                 <tr>
                     <td>
@@ -48,16 +56,8 @@
                 <tr>
                     <td>
                         <div class="bl">
-                            <label for="reset">Reset Table</label>
-                            <button id="reset" onclick="document.getElementById('user-table').innerHTML=''; api.send('resize', {height : 125})">Reset</button>
-                        </div>
-                    </td>
-                    <td>
-                        <!--checkbox-->
-                        <div class="bl">
-                            <label for="autowho">Enable Autowho</label>
+                            <label for="autowho">Autowho Enabled</label>
                             <input type="checkbox" id="autowho" name="autowho" onclick="handleAutowho(this.checked)" checked>
-                            
                         </div>
                     </td>
                 </tr>
@@ -70,9 +70,6 @@
             </div>
             <div class="bl" id="packDiv" style="display:none">
                 <span>Current Resource Pack: </span><span id="packName">placeholder</span>
-            </div>
-            <div id="updateDiv" style="display:none">
-                <span id="updateText">placeholder</span>
             </div>
             
              
