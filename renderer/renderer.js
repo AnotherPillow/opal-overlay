@@ -273,7 +273,7 @@ const generateRow = (user,re=false) => {
             `<td> - &nbsp</td>`+
             `<td>NICK</td>`
         )
-    if (re) row.onload = () => {resize()}
+    if (re) row.onload = () => {setTimeout(()=>{resize()},100)}
     return row;
 }
 const addBwPlayer = (bwStats) => {
@@ -281,7 +281,8 @@ const addBwPlayer = (bwStats) => {
     table.appendChild(generateRow(bwStats,true));
     resize();
 }
-const nullSession = {
+
+let sessionStats = {
     kills:0,
     deaths:0,
     fkdr:0,
@@ -291,8 +292,7 @@ const nullSession = {
     final_deaths:0,
     beds_broken:0,
     beds_lost:0,
-}
-let sessionStats =  nullSession;
+};
 const handleStats = (stats) => {
     let row = document.getElementById('sessionTR');
     const sessionDiv = document.getElementById('sessionDiv');
@@ -313,13 +313,9 @@ const handleStats = (stats) => {
 
     row.innerHTML = ''
 
-    sessionStats.fkdr = (sessionStats.final_kills/sessionStats.final_deaths).toFixed(2) || 0;
-    sessionStats.bblr = (sessionStats.beds_broken/sessionStats.beds_lost).toFixed(2) || 0;
-    sessionStats.kdr = (sessionStats.kills/sessionStats.deaths).toFixed(2) || 0;
-
-    sessionStats.fkdr = checkForNaNInfity(sessionStats.fkdr)
-    sessionStats.bblr = checkForNaNInfity(sessionStats.bblr)
-    sessionStats.kdr = checkForNaNInfity(sessionStats.kdr)
+    sessionStats.fkdr = calcRatio(sessionStats.final_kills, sessionStats.final_deaths); //calc fkdr
+    sessionStats.kdr = calcRatio(sessionStats.kills, sessionStats.deaths); //calc kdr
+    sessionStats.bblr = calcRatio(sessionStats.beds_broken, sessionStats.beds_lost);
 
     //check if infinity
     
@@ -330,12 +326,26 @@ const handleStats = (stats) => {
     resize();
 }
 
-const checkForNaNInfity = (num) => {
-    if (num === Infinity || num === NaN) return 0;
-    else return num;
+const calcRatio = (finals, deaths) => {
+    if (finals === 0 && deaths === 0) return 0;
+    let tempRatio = (finals/deaths).toFixed(2);
+    if (!isFinite(tempRatio)) {
+        return finals.toFixed(2);
+    }
+    return tempRatio;
 }
 const clearSession = () => {
-    sessionStats = nullSession;
+    sessionStats = {
+        kills:0,
+        deaths:0,
+        fkdr:0,
+        bblr:0,
+        kdr:0,
+        final_kills:0,
+        final_deaths:0,
+        beds_broken:0,
+        beds_lost:0,
+    };
     const sessionDiv = document.getElementById('sessionDiv');
     const row = document.getElementById('sessionTR');
     row.innerHTML = '';

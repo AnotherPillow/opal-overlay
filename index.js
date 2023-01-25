@@ -205,7 +205,7 @@ function runTail(path) {
                     })
                 })
             }
-        } else if (/^\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[CHAT\] .+ (was .+ by|by|with) .+$/.test(data)) {
+        } else if (/^\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[CHAT\] .+ (was .+ by|by|with|died in) .+$/.test(data)) {
             foundKill(data,IGN);
         }
         if (players.length >= 1) {
