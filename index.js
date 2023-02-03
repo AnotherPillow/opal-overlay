@@ -337,9 +337,19 @@ function runTail(path) {
 }
 
 ipcMain.on('config', (event,data) => {
+    switch (data.update) {
+        case 'api_key':
+            config.api_key = data.value;
+            break;
+        case 'autowho':
+            config.autowho = data.value;
+            break;
+        default:
+            break;
+    }
+    console.log(config)
+
     enableAutowho = config.autowho;
-    config = {...config, ...data};
-    //console.log(config)
 
     fs.writeFile(configPath, JSON.stringify(config), (err) => {
         if (err) throw err;

@@ -172,7 +172,10 @@ const checkForConfig = () => {
 }
 
 const handleAPIKey = (key) => {
-    api.send('config', {api_key: key})
+    api.send('config', {
+        update: 'api_key',
+        value: key
+    })
     document.querySelector('#apikey').style.display = 'none';
 }
 const handleVersion = (version) => {
@@ -227,7 +230,10 @@ const resize = (extra=50) => {
     api.send("resize", {height : bodyHeight.height + extra})
 }
 const handleAutowho = (checked) => {
-    api.send('config', {autowho: checked})
+    api.send('config', {
+        update: 'autowho',
+        value: checked
+    })
     console.log(checked)
 }
 const resetTable = () => {
