@@ -142,7 +142,11 @@ const getNameColour = (user) => {
             return '#FFAA00';
         case 'NON':
             return '#AAAAAA';
+        default:
+            return '#AAAAAA';
     }
+
+    return '#AAAAAA';
 }
 
 const handleResourcePack = (name) => {
@@ -252,6 +256,9 @@ const generateRow = (user,re=false) => {
             break;
         case 'opal-extra':
             tag = 'EX';
+            break;
+        case 'opal-bot':
+            tag = 'BOT';
             break;
         default:
             tag = ' - ';

@@ -56,3 +56,6 @@ a.offOrange {
     font-family: 'Minecraft';
     src: url(Minecraft.ttf);
 }
+::-webkit-scrollbar {
+    display: none;
+}

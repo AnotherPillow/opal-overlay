@@ -131,7 +131,8 @@ ipcMain.on('client', (event,data) => {
             tail = (appdata + '/.minecraft/logs/fml-client-latest.log');
             break;
         default:
-            tail = (appdata + '/.minecraft/logs/latest.log');
+            //tail = (appdata + '/.minecraft/logs/latest.log');
+            tail = data.path;
             break;
     }
     runTail(tail);
@@ -204,6 +205,21 @@ function runTail(path) {
                         data: data
                     })
                 })
+            } if (name.startsWith(":")) {
+                let cmd = name.substring(1);
+
+                if ([
+                    "2s",
+                    "2",
+                    "double",
+                    "doubles",
+                ].includes(cmd)) {
+                    exec('wscript rq_2s.vbs', {cwd: vbsCWD}, (err, stdout, stderr) => {
+                        if (err !== null) return;
+                    });
+                }
+                
+
             }
         } else if (/^\[\d\d:\d\d:\d\d\] \[Client thread\/INFO\]: \[CHAT\] .+ (was .+ by|by|with|died in) .+$/.test(data)) {
             foundKill(data,IGN);
@@ -246,12 +262,20 @@ function runTail(path) {
 
                             fetch(apiURL + uuid).then(res => res.json()).then(hyp => {
                                 console.log("recv hypixel data")
+                                let truncated_hyp = JSON.stringify(hyp).substring(0, 100);
+                                console.log(truncated_hyp + " " + uuid + " " + player)
                                 let data = {
                                     bwStats: {}
                                 }
                                 data.nick = nick;
                                 if (hyp.player === null || nick === true) data.nick = true;
-                                if (!nick) {
+                                if (nick) {
+                                
+                                    data.name = player;
+                                    data.rank = "NULL";
+                                    data.paidRank = "NON";
+                                
+                                } else {
                                     data.uuid = uuid;
                                     data.name = player;
                                     
@@ -261,6 +285,10 @@ function runTail(path) {
                                     try {data.rank = hyp.player.rank || "NULL";} catch (_){}
 
                                     try {if (hyp.player.monthlyPackageRank === 'SUPERSTAR') data.paidRank = 'MVP_PLUS_PLUS';} catch (_){}
+
+                                    if (data.name.match(/^Antisniperbot(\d+)$/g) || data.name === 'SniperDected') data.channel = 'opal-bot'
+
+                                    
 
                                         
                                     let bedwars = {}
@@ -288,10 +316,6 @@ function runTail(path) {
                                     }
                                     try {if (hyp.player.achievements.bedwars_level >= 0) data.bwStats.star = hyp.player.achievements.bedwars_level;}
                                     catch (_){data.bwStats.star = 0;}
-                                } else {
-                                    data.name = player;
-                                    data.rank = "NULL";
-                                    data.paidRank = "NON";
                                 }
                                 bwPlayers.push(data)
                                 forLoopRuns--
@@ -431,6 +455,8 @@ const generatePlayer = (player) => {
                         try {data.rank = hyp.player.rank || "NULL";} catch (_){}
 
                         try {if (hyp.player.monthlyPackageRank === 'SUPERSTAR') data.paidRank = 'MVP_PLUS_PLUS';} catch (_){}
+
+                        if (data.name.match(/^Antisniperbot(\d+)$/g) || data.name === 'SniperDected') data.channel = 'opal-bot'
 
                             
                         let bedwars = {}
