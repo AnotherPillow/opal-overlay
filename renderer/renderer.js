@@ -333,7 +333,7 @@ const handleStats = (stats) => {
     //check if infinity
     
 
-    row.innerHTML = `<td>${sessionStats.fkdr} - ${sessionStats.kdr} - ${sessionStats.final_kills} - ${sessionStats.beds_broken}</td>`
+    row.innerHTML = `<td>${sessionStats.fkdr}</td><td>${sessionStats.kdr}</td><td>${sessionStats.final_kills}</td><td>${sessionStats.beds_broken}</td>`
 
     sessionDiv.style.display = 'block';
     resize();
