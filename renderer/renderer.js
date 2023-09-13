@@ -69,7 +69,13 @@ const generateBedwarsUserTable = (users) => {
 
     //sort users by stars
     users.sort((a, b) => {
+        // return b.bwStats.star - a.bwStats.star;
+        // make it so 0 stars are at the bottom
+
+        if (a.bwStats.star == 0) return 1;
+        if (b.bwStats.star == 0) return -1;
         return b.bwStats.star - a.bwStats.star;
+
     })
     
     console.log(users)
@@ -295,7 +301,7 @@ const addBwPlayer = (bwStats) => {
     resize();
 }
 
-let sessionStats = {
+let originalSessionsStats = {
     kills:0,
     deaths:0,
     fkdr:0,
@@ -306,6 +312,8 @@ let sessionStats = {
     beds_broken:0,
     beds_lost:0,
 };
+
+let sessionStats = { ...originalSessionsStats }
 const handleStats = (stats) => {
     let row = document.getElementById('sessionTR');
     const sessionDiv = document.getElementById('sessionDiv');
@@ -348,17 +356,7 @@ const calcRatio = (finals, deaths) => {
     return tempRatio;
 }
 const clearSession = () => {
-    sessionStats = {
-        kills:0,
-        deaths:0,
-        fkdr:0,
-        bblr:0,
-        kdr:0,
-        final_kills:0,
-        final_deaths:0,
-        beds_broken:0,
-        beds_lost:0,
-    };
+    sessionStats = { ...originalSessionsStats }
     const sessionDiv = document.getElementById('sessionDiv');
     const row = document.getElementById('sessionTR');
     row.innerHTML = '';

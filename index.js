@@ -441,6 +441,8 @@ const generatePlayer = (player) => {
 
                 fetch(apiURL + uuid).then(res => res.json()).then(hyp => {
                     console.log("recv hypixel data")
+                    let truncated_hyp = JSON.stringify(hyp).substring(0, 100);
+                    console.log(truncated_hyp + " " + uuid + " " + player)
                     let data = {
                         bwStats: {}
                     }

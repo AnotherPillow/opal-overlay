@@ -65,3 +65,7 @@ a.offOrange {
 ::-webkit-scrollbar {
     display: none;
 }
+
+.sessionTable tr {
+    text-align: center;
+}
