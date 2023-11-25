@@ -1,7 +1,7 @@
 var currentFont = 'inconsolata'
 
 
-function handleClient(path=false, gen) {
+function handleClient(path=false) {
     const client = document.getElementById('client').value;
     
     if (!path) {
@@ -10,7 +10,10 @@ function handleClient(path=false, gen) {
             client: client
         }
     }
-    api.send('client', path);
+    api.send('client', {
+        path: path,
+        client: null,
+    });
 }
 
 api.toRenderer('renderer', (ev, data) => {
@@ -40,25 +43,6 @@ api.toRenderer('renderer', (ev, data) => {
 })
 
 const generateBedwarsUserTable = (users) => {
-    /*
-        users = [
-            {
-                name: 'username',
-                bwStats: {
-                    finalKills: 0,
-                    bedsBroken: 0,
-                    wins: 0,
-                    kills: 0,
-                    deaths: 0,
-                    losses: 0,
-                    finalDeaths: 0,
-                    star: 0,
-                    bedsLost: 0,
-                }
-                paidRank: 'rank',
-            }
-        ]
-    */
     const table = document.getElementById('user-table');
     table.innerHTML = '';
 
@@ -313,7 +297,7 @@ let originalSessionsStats = {
     beds_lost:0,
 };
 
-let sessionStats = { ...originalSessionsStats }
+let sessionStats = structuredClone(originalSessionsStats)
 const handleStats = (stats) => {
     let row = document.getElementById('sessionTR');
     const sessionDiv = document.getElementById('sessionDiv');
@@ -356,7 +340,7 @@ const calcRatio = (finals, deaths) => {
     return tempRatio;
 }
 const clearSession = () => {
-    sessionStats = { ...originalSessionsStats }
+    sessionStats = structuredClone(originalSessionsStats)
     const sessionDiv = document.getElementById('sessionDiv');
     const row = document.getElementById('sessionTR');
     row.innerHTML = '';
