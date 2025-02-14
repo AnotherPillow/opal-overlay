@@ -13,8 +13,7 @@ if (!fs.existsSync(configPath))
 const vbsCWD = app.isPackaged ? path.join(process.resourcesPath, 'src') : path.join(__dirname, 'SRC');
 
 let config = require(configPath);
-if (!config.autowho) config.autowho = true;
-var enableAutowho = config.autowho || true;
+var enableAutowho = config.autowho ?? false;
 
 const appdata = process.env.appdata
 const homedir = app.getPath('home');
@@ -91,7 +90,8 @@ setTimeout(() => {
         config: config,
         version: version
     });
-}, 1600);
+//}, 1600);
+}, 5000);
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
