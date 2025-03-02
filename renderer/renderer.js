@@ -1,5 +1,11 @@
 var currentFont = 'inconsolata'
 
+document.addEventListener('DOMContentLoaded', () => {
+    api.send('ready')
+    resize();
+    checkForConfig()
+})
+
 
 function handleClient(path=false) {
     const client = document.getElementById('client').value;
@@ -43,6 +49,8 @@ api.toRenderer('renderer', (ev, data) => {
 })
 
 const generateBedwarsUserTable = (users) => {
+    document.querySelector('#settings').style.display = 'none'
+
     const table = document.getElementById('user-table');
     table.innerHTML = '';
 
@@ -149,12 +157,15 @@ const handleOpacity = (opacity) => {
     const body = document.querySelector('body');
     body.style.backgroundColor = `rgba(73, 73, 73, ${opacity/100})`;
 }
+
 const checkForConfig = () => {
     api.getConfig('conf',(event,data)=> {
         const config = data.config;
+        console.log(config)
+        document.querySelector('#apikey>input').value = config.api_key
         //console.log(data)
         if (config.api_key === "" || config.api_key === undefined || config.api_key === null) {
-            document.querySelector('#apikey').style.display = 'block';  
+            // document.querySelector('#apikey').style.display = 'block';  
         }
         if (data.version !== undefined) {
             handleVersion(data.version)
@@ -170,7 +181,7 @@ const handleAPIKey = (key) => {
         update: 'api_key',
         value: key
     })
-    document.querySelector('#apikey').style.display = 'none';
+    
 }
 const handleVersion = (version) => {
     const fetchURL = 'https://api.github.com/repos/anotherpillow/opal-overlay/releases/latest';
@@ -218,10 +229,9 @@ const handleFont = (font) => {
     resize();
 }
 const resize = (extra=50) => {
-    if (document.getElementById('packDiv').style.display !== 'none') extra += 30;
     if (document.getElementById('sessionDiv').style.display !== 'none') extra += 30;
     const bodyHeight = document.body.getBoundingClientRect()
-    api.send("resize", {height : bodyHeight.height + extra})
+    api.send("resize", {height: bodyHeight.height + extra})
 }
 const handleAutowho = (checked) => {
     api.send('config', {
@@ -231,6 +241,7 @@ const handleAutowho = (checked) => {
     console.log(checked)
 }
 const resetTable = () => {
+    document.querySelector('#settings').style = ''
     document.getElementById('user-table').innerHTML='';
     resize()
 }
@@ -280,6 +291,7 @@ const generateRow = (user,re=false) => {
     return row;
 }
 const addBwPlayer = (bwStats) => {
+    document.querySelector('#settings').style.display = 'none'
     const table = document.getElementById('user-table');
     table.appendChild(generateRow(bwStats,true));
     resize();

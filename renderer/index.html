@@ -18,59 +18,64 @@
             <br>
             <h1 class="orange r" id="version" style="font-size: 0.7em;display:none;">1.2.3</h1>
             
-            <select id="client" onchange="handleClient(0, 1)" class="bl">
-                <option value="vanilla">Vanilla</option>
-                <option value="forge">Forge</option>
-                <option value="lunar">Lunar</option>
-                <option value="badlion">Badlion</option>
-                <option value="feather">Feather Mod</option>
-                <option value="laby">LabyMod</option>
-                <!--<option value="other">Other/Alternate game directory</option>!-->
-            </select>
-            
             <table id="user-table" class="inconsolata"></table>
+            
             <div id="sessionDiv" style="display:none;">
                 <table id="sessionTable">
                     <tr><th>FKDR</th><th>KDR</th><th>Finals</th><th>Kills</th></tr>
                     <tr id="sessionTR"></tr>
                 </table>
             </div>  
-            <table id="settings">
-                <tr>
-                    <td>
-                        <div class="bl">
-                            <label for="opacity">Opacity</label>
-                            <input type="range" id="opacity" name="opacity" min="0" max="100" value="20" onload="getNameColour(this.value)" oninput="handleOpacity(this.value)">
-                        </div>
-                    </td>
-                    <td>
-                        <div class="bl">
-                            <label for="font">Font</label>
-                            <select id="font" onchange="handleFont(this.value)">
-                                <option class="inconsolata" value="inconsolata">Inconsolata</option>
-                                <option class="minecraft" value="minecraft">Minecraft</option>
-                                <option class="kablammo" value="kablammo">Kablammo</option>
+            
+            <div id="settings">
+                <p><strong>Settings (these disappear):</strong></p>
+                <table>
+                    <tr>
+                        <td>
+                            <div class="bl">
+                                <label for="opacity">Opacity</label>
+                                <input type="range" id="opacity" name="opacity" min="0" max="100" value="20" onload="getNameColour(this.value)" oninput="handleOpacity(this.value)">
+                            </div>
+                        </td>
+                        <td>
+                            <div class="bl">
+                                <label for="font">Font</label>
+                                <select id="font" onchange="handleFont(this.value)">
+                                    <option class="inconsolata" value="inconsolata">Inconsolata</option>
+                                    <option class="minecraft" value="minecraft">Minecraft</option>
+                                    <option class="kablammo" value="kablammo">Kablammo</option>
+                                </select>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="bl">
+                                <label for="autowho">Autowho Enabled</label>
+                                <input type="checkbox" id="autowho" name="autowho" onclick="handleAutowho(this.checked)" checked>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="bl" id="apikey">
+                                <label for="apikey">Enter API Key</label>
+                                <input type="password" name="apikey" placeholder="Enter API Key" oninput="handleAPIKey(this.value)">
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <select id="client" onchange="handleClient(0, 1)" class="bl">
+                                <option value="vanilla">Vanilla</option>
+                                <option value="forge">Forge</option>
+                                <option value="lunar">Lunar</option>
+                                <option value="badlion">Badlion</option>
+                                <option value="feather">Feather Mod</option>
+                                <option value="laby">LabyMod</option>
+                                <!--<option value="other">Other/Alternate game directory</option>!-->
                             </select>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="bl">
-                            <label for="autowho">Autowho Enabled</label>
-                            <input type="checkbox" id="autowho" name="autowho" onclick="handleAutowho(this.checked)" checked>
-                        </div>
-                    </td>
-                </tr>
-                
-                
-            </table>
-            <div class="bl" id="apikey" style="display:none;">
-                <label for="apikey">Enter API Key</label>
-                <input type="text"name="apikey" placeholder="Enter API Key (paste it in, this will disappear))" oninput="handleAPIKey(this.value)">
-            </div>
-            <div class="bl" id="packDiv" style="display:none">
-                <span>Current Resource Pack: </span><span id="packName">placeholder</span>
+                        </td>
+                    </tr>
+                </table>
             </div>
             
              

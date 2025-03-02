@@ -49,7 +49,7 @@ let win;
 
 function createWindow () {;
     win = new BrowserWindow({
-        width: 500,
+        width: 520,
         height: 150,
         transparent: true,
         frame: false,
@@ -72,26 +72,12 @@ function createWindow () {;
     });
     
     win.setPosition(screen.getPrimaryDisplay().workAreaSize.width - 700, 0)
-
-    setTimeout(() => {
-        win.webContents.send("conf",{
-            config: config,
-            version: version
-        });
-    }, 600);
 }
 
 //app.on('ready', createWindow);
 app.on('ready', () => {
     createWindow();
 });
-setTimeout(() => {
-    win.webContents.send("conf",{
-        config: config,
-        version: version
-    });
-//}, 1600);
-}, 5000);
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
@@ -105,8 +91,15 @@ app.on('activate', () => {
     }
 })
 
+ipcMain.on('ready', () => {
+    win.webContents.send("conf",{
+        config: config,
+        version: version
+    });
+})
+
 ipcMain.on('resize', (event,data) => {
-    win.setSize(500, data.height)
+    win.setSize(520, data.height)
 })
 
 ipcMain.on('client', (event,data) => {
@@ -136,7 +129,7 @@ ipcMain.on('client', (event,data) => {
             break;
     }
     runTail(tail);
-    })
+})
 
 const toRenderer = (data) => {
     win.webContents.send("renderer",data);
@@ -261,9 +254,10 @@ function runTail(path) {
                             }
 
                             fetch(apiURL + uuid).then(res => res.json()).then(hyp => {
-                                console.log("recv hypixel data")
+                                // console.log("recv hypixel data")
                                 let truncated_hyp = JSON.stringify(hyp).substring(0, 100);
-                                console.log(truncated_hyp + " " + uuid + " " + player)
+                                // console.log(truncated_hyp + " " + uuid + " " + player)
+                                console.log(`Parsing data for ${player} (${uuid})`)
                                 let data = {
                                     bwStats: {}
                                 }

@@ -12,7 +12,7 @@ body, .inconsolata {
     font-family: 'Inconsolata', monospace;
 }
 
-#user-table.inconsolata #settings>tr>td {
+#user-table.inconsolata #settings tr>td {
     font-size: 13px;
 }
 .other_input {
@@ -68,4 +68,8 @@ a.offOrange {
 
 .sessionTable tr {
     text-align: center;
+}
+
+#settings>p {
+    margin: 0;
 }
